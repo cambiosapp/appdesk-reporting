@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  appdesk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        - NEXT_PUBLIC_JIRA_URL=${NEXT_PUBLIC_JIRA_URL}
+    image: ${DOCKER_REGISTRY:-cambiosapp}/appdesk:${TAG:-latest}
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - NEXT_PUBLIC_JIRA_URL=${NEXT_PUBLIC_JIRA_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - JIRA_URL=${JIRA_URL}
+      - JIRA_EMAIL=${JIRA_EMAIL}
+      - JIRA_PAT=${JIRA_PAT}
+      - JIRA_PROJECT_KEY=${JIRA_PROJECT_KEY}
+    restart: unless-stopped
+    networks:
+      - cambiosnet
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/reportes"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.services.appdesk.loadbalancer.server.port=3000"
+        - "traefik.http.routers.appdesk.rule=Host(`appdesk.cambios-app.com`)"
+        - "traefik.http.routers.appdesk.entrypoints=websecure"
+        - "traefik.http.routers.appdesk.tls=true"
+        - "traefik.http.routers.appdesk.tls.certresolver=letsencrypt"
+        - "traefik.docker.network=cambiosnet"
+
+networks:
+  cambiosnet:
+    external: true
+    name: cambiosnet

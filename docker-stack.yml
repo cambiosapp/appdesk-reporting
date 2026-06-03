@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  appdesk:
+    image: ${DOCKER_REGISTRY:-cambiosapp}/appdesk:${TAG:-latest}
+    ports:
+      - target: 3000
+        published: 3000
+        mode: host
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - NEXT_PUBLIC_JIRA_URL=${NEXT_PUBLIC_JIRA_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - JIRA_URL=${JIRA_URL}
+      - JIRA_EMAIL=${JIRA_EMAIL}
+      - JIRA_PAT=${JIRA_PAT}
+      - JIRA_PROJECT_KEY=${JIRA_PROJECT_KEY}
+    networks:
+      - cambiosnet
+    deploy:
+      mode: replicated
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.services.appdesk.loadbalancer.server.port=3000"
+        - "traefik.http.routers.appdesk.rule=Host(`appdesk.cambios-app.com`)"
+        - "traefik.http.routers.appdesk.entrypoints=websecure"
+        - "traefik.http.routers.appdesk.tls=true"
+        - "traefik.http.routers.appdesk.tls.certresolver=letsencrypt"
+        - "traefik.docker.network=cambiosnet"
+
+networks:
+  cambiosnet:
+    external: true
+    name: cambiosnet
