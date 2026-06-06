@@ -1,8 +1,14 @@
+# ==========================================================
+# AppDesk — Docker Swarm Stack (Portainer)
+# ==========================================================
+# Imagen desde GitHub Container Registry
+# ==========================================================
+
 version: '3.8'
 
 services:
   appdesk:
-    image: ${DOCKER_REGISTRY:-cambiosapp}/appdesk:${TAG:-latest}
+    image: ghcr.io/cambiosapp/appdesk-reporting:${TAG:-latest}
     ports:
       - target: 3000
         published: 3000

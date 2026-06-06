@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AppDesk — Portal de Reportes
 
-## Getting Started
+Portal interno de reportes (Bug/Task/Feature) con integración a Jira.
 
-First, run the development server:
+**Stack**: Next.js 14 + Supabase + Tailwind CSS + Docker
+
+---
+
+## 🚀 Desarrollo local
 
 ```bash
+# Instalar dependencias
+npm install
+
+# Copiar variables de entorno
+cp .env.example .env.local
+# Editar .env.local con tus valores
+
+# Iniciar dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# → http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🧪 Tests
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm test         # Una vez
+npm run test:watch   # Watch mode
+npm run test:coverage  # Con cobertura
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🐳 Docker
 
-## Learn More
+### Build manual
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+docker build -t appdesk .
+docker run -p 3000:3000 --env-file .env.local appdesk
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📦 GitHub Container Registry (ghcr.io)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Las imágenes se publican automáticamente vía GitHub Actions:
 
-## Deploy on Vercel
+| Evento | Tag |
+|--------|-----|
+| Push a `main` | `latest`, `sha-<commit>` |
+| Tag `vX.Y.Z` | `X.Y.Z`, `X.Y`, `latest` |
+| PR a `main` | `pr-<number>` (no se pushea) |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Imagen**: `ghcr.io/cambiosapp/appdesk-reporting`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Pull manual
+
+```bash
+echo $GITHUB_TOKEN | docker login ghcr.io -u <user> --password-stdin
+docker pull ghcr.io/cambiosapp/appdesk-reporting:latest
+```
+
+## 🚢 Deploy en Swarm (Portainer)
+
+```bash
+# Stack name: appdesk
+# Stack file: docker-stack.yml
+# Env vars requeridas en Portainer:
+#   - TAG (default: latest)
+#   - NEXT_PUBLIC_SUPABASE_URL
+#   - NEXT_PUBLIC_SUPABASE_ANON_KEY
+#   - NEXT_PUBLIC_JIRA_URL
+#   - SUPABASE_SERVICE_ROLE_KEY
+#   - JIRA_URL
+#   - JIRA_EMAIL
+#   - JIRA_PAT
+#   - JIRA_PROJECT_KEY
+```
+
+Ver `docker-stack.yml` para la configuración completa del servicio Swarm.
+
+## 🗄️ Supabase
+
+El schema SQL está en `scripts/supabase-setup.sql`. Incluye:
+- Tablas: `profiles`, `modules`, `reports`
+- RLS policies
+- Storage bucket para adjuntos
+- Trigger auto-create profile al registrarse
+- Seed data con módulos por defecto
+
+## 📁 Estructura
+
+```
+src/
+├── app/
+│   ├── login/          → Login con Supabase Auth
+│   ├── dashboard/      → Tabla + filtros + paginación
+│   ├── reportes/       → Formulario de reportes
+│   ├── admin/          → Admin panel (usuarios, módulos, reportes)
+│   └── api/            → API Routes (Jira integration)
+├── components/
+│   ├── Sidebar.tsx
+│   ├── Header.tsx
+│   └── AuthGuard.tsx
+├── lib/
+│   ├── supabase.ts
+│   └── jira.ts
+└── types.ts
+```
