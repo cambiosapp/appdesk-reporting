@@ -75,8 +75,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          # Build-time args (vacías por defecto, se pasan vía secrets en runtime)
+          # Build-time args para inline de NEXT_PUBLIC_* en el bundle cliente
+          # Configúralas como secrets en GitHub:
+          # https://github.com/cambiosapp/appdesk-reporting/settings/secrets/actions
           build-args: |
-            NEXT_PUBLIC_SUPABASE_URL=
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=
-            NEXT_PUBLIC_JIRA_URL=
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_JIRA_URL=${{ secrets.NEXT_PUBLIC_JIRA_URL }}

@@ -18,10 +18,12 @@ RUN npm ci --ignore-scripts
 
 COPY . .
 
-# Set build-time env vars (override in Swarm secrets/env)
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-ARG NEXT_PUBLIC_JIRA_URL
+# Build-time env vars para inline de NEXT_PUBLIC_* en el bundle cliente
+# Se pasan vía build-args en CI (GitHub Actions secrets)
+# Default vacío — no rompe el build, el cliente usa runtime
+ARG NEXT_PUBLIC_SUPABASE_URL=
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=
+ARG NEXT_PUBLIC_JIRA_URL=
 
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY

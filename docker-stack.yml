@@ -2,6 +2,7 @@
 # AppDesk — Docker Swarm Stack (Portainer)
 # ==========================================================
 # Imagen desde GitHub Container Registry
+# Valores inline para evitar variables vacías en Portainer
 # ==========================================================
 
 version: '3.8'
@@ -15,14 +16,14 @@ services:
         mode: host
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-      - NEXT_PUBLIC_JIRA_URL=${NEXT_PUBLIC_JIRA_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - JIRA_URL=${JIRA_URL}
-      - JIRA_EMAIL=${JIRA_EMAIL}
-      - JIRA_PAT=${JIRA_PAT}
-      - JIRA_PROJECT_KEY=${JIRA_PROJECT_KEY}
+      - NEXT_PUBLIC_SUPABASE_URL=https://devsupabase.cambios-app.com
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.qh_kwkB4VQuwZxhrrjhVYWuM06I9P5-N9EPOHUYbMc4
+      - NEXT_PUBLIC_JIRA_URL=https://cambiosapp.atlassian.net
+      - SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogInNlcnZpY2Vfcm9sZSIsCiAgImlzcyI6ICJzdXBhYmFzZSIsCiAgImlhdCI6IDE3MTUwNTA4MDAsCiAgImV4cCI6IDE4NzI4MTcyMDAKfQ.pG42nkDNNDYyncEGmPJnqCplaBUsmkDcpRLUw76_Lj4
+      - JIRA_URL=https://cambiosapp.atlassian.net
+      - JIRA_EMAIL=asesortecnologico@jyr-asociados.com
+      - JIRA_PAT=ATATT3xFfGF0obld06ou-YEKhkD8Ke0VR0Ca1Fk_gKlNPl2a4p3_Cr1Ck_glx1nN7lhrwbssz9p384LDDz_EO-fnRlgrr6waYuHWB4ifIso-sW5PX6VIwvpHZ4TIOhltO1ol-fHlQoJmS6W-uz2SdulYuvUyzgj2JhKgncoUOu3N14XmYwZBd9g=979C7075
+      - JIRA_PROJECT_KEY=CA
     networks:
       - cambiosnet
     deploy:
