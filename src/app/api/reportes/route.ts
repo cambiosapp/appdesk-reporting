@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createReportSchema } from '@/lib/validation';
+import { rateLimit } from '@/lib/rate-limit';
 
 // GET - List reports (with optional filters)
 export async function GET(request: Request) {
@@ -10,6 +12,10 @@ export async function GET(request: Request) {
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Rate limit
+    const limit = rateLimit(`reports:get:${user.id}`);
+    if (limit) return limit;
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -71,7 +77,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST - Create a new report (API endpoint)
+// POST - Create a new report
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
@@ -81,37 +87,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Rate limit
+    const limit = rateLimit(`reports:post:${user.id}`);
+    if (limit) return limit;
+
     const body = await request.json();
 
-    // Validate required fields
-    if (!body.title || !body.type || !body.priority || !body.description) {
+    // Validate with Zod
+    const parsed = createReportSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'title, type, priority, and description are required' },
+        { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
-    }
-
-    const validTypes = ['bug', 'task', 'feature'];
-    const validPriorities = ['low', 'medium', 'high', 'critical'];
-
-    if (!validTypes.includes(body.type)) {
-      return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
-    }
-
-    if (!validPriorities.includes(body.priority)) {
-      return NextResponse.json({ error: 'Invalid priority' }, { status: 400 });
     }
 
     const { data, error } = await supabase
       .from('reports')
       .insert({
-        title: body.title,
-        type: body.type,
-        priority: body.priority,
-        description: body.description,
-        module_id: body.moduleId || null,
+        title: parsed.data.title,
+        type: parsed.data.type,
+        priority: parsed.data.priority,
+        description: parsed.data.description,
+        module_id: parsed.data.moduleId || null,
         reporter_id: user.id,
-        attachments: body.attachments || [],
+        attachments: parsed.data.attachments || [],
         status: 'open',
       })
       .select()

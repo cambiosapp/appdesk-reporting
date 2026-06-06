@@ -175,7 +175,7 @@ CREATE POLICY "Anyone can view attachments"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'attachments');
 
--- 8. Auto-create profile on signup
+-- 8. Auto-create profile on signup (respects role from metadata if set by admin)
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -183,7 +183,7 @@ BEGIN
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'name', NEW.email),
-    'reporter'
+    COALESCE(NEW.raw_user_meta_data->>'role', 'reporter')
   );
   RETURN NEW;
 END;

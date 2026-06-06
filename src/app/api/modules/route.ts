@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createModuleSchema, updateModuleSchema } from '@/lib/validation';
+import { rateLimit } from '@/lib/rate-limit';
 
 // GET - List all modules
 export async function GET() {
@@ -10,6 +12,10 @@ export async function GET() {
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Rate limit
+    const limit = rateLimit(`modules:get:${user.id}`);
+    if (limit) return limit;
 
     const { data, error } = await supabase
       .from('modules')
@@ -36,6 +42,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Rate limit
+    const limit = rateLimit(`modules:post:${user.id}`);
+    if (limit) return limit;
+
     // Check admin role
     const { data: profile } = await supabase
       .from('profiles')
@@ -47,15 +57,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { name, description } = await request.json();
+    const body = await request.json();
 
-    if (!name || !name.trim()) {
-      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+    // Validate with Zod
+    const parsed = createModuleSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
 
     const { data, error } = await supabase
       .from('modules')
-      .insert({ name: name.trim(), description: description?.trim() || null })
+      .insert({ name: parsed.data.name.trim(), description: parsed.data.description?.trim() || null })
       .select()
       .single();
 
@@ -79,6 +94,10 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Rate limit
+    const limit = rateLimit(`modules:put:${user.id}`);
+    if (limit) return limit;
+
     // Check admin role
     const { data: profile } = await supabase
       .from('profiles')
@@ -90,20 +109,25 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { id, name, description } = await request.json();
+    const body = await request.json();
 
-    if (!id) {
-      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    // Validate with Zod
+    const parsed = updateModuleSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
 
     const updates: any = {};
-    if (name !== undefined) updates.name = name.trim();
-    if (description !== undefined) updates.description = description?.trim() || null;
+    if (parsed.data.name !== undefined) updates.name = parsed.data.name.trim();
+    if (parsed.data.description !== undefined) updates.description = parsed.data.description?.trim() || null;
 
     const { data, error } = await supabase
       .from('modules')
       .update(updates)
-      .eq('id', id)
+      .eq('id', parsed.data.id)
       .select()
       .single();
 
@@ -126,6 +150,10 @@ export async function DELETE(request: Request) {
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Rate limit
+    const limit = rateLimit(`modules:delete:${user.id}`);
+    if (limit) return limit;
 
     // Check admin role
     const { data: profile } = await supabase

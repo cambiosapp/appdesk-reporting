@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import DashboardLayout from '@/components/DashboardLayout';
-import type { Report } from '@/lib/types';
+import type { Report, Module, ReportPriority, ReportStatus } from '@/lib/types';
 import {
   REPORT_TYPE_LABELS,
   PRIORITY_LABELS,
@@ -21,6 +21,10 @@ import {
   FileText,
   Download,
   Loader2,
+  Pencil,
+  Trash2,
+  X,
+  Check,
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
@@ -30,10 +34,41 @@ export default function ReporteDetailPage() {
   const supabase = createClient();
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Edit mode state
+  const [editMode, setEditMode] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPriority, setEditPriority] = useState<ReportPriority>('medium');
+  const [editStatus, setEditStatus] = useState<ReportStatus>('open');
+  const [modules, setModules] = useState<Module[]>([]);
+  const [editModuleId, setEditModuleId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [editError, setEditError] = useState('');
 
   useEffect(() => {
     async function loadReport() {
       if (!params.id) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setCurrentUserId(user.id);
+
+      // Load profile to check role
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        if (profile?.role === 'admin') setIsAdmin(true);
+      }
+
+      // Load modules
+      const { data: modulesData } = await supabase.from('modules').select('*').order('name');
+      if (modulesData) setModules(modulesData);
 
       const { data, error } = await supabase
         .from('reports')
@@ -53,6 +88,74 @@ export default function ReporteDetailPage() {
 
     loadReport();
   }, [supabase, params.id]);
+
+  const isOwner = currentUserId && report?.reporter_id === currentUserId;
+  const canModify = isAdmin || isOwner;
+
+  const startEdit = () => {
+    if (!report) return;
+    setEditTitle(report.title);
+    setEditDescription(report.description);
+    setEditPriority(report.priority);
+    setEditStatus(report.status);
+    setEditModuleId(report.module_id || '');
+    setEditMode(true);
+    setEditError('');
+  };
+
+  const cancelEdit = () => {
+    setEditMode(false);
+    setEditError('');
+  };
+
+  const handleSave = async () => {
+    if (!report) return;
+    setSaving(true);
+    setEditError('');
+
+    const res = await fetch(`/api/reportes/${report.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: report.id,
+        title: editTitle,
+        description: editDescription,
+        priority: editPriority,
+        status: editStatus,
+        moduleId: editModuleId || null,
+      }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      setEditError(result.error || 'Error al guardar');
+      setSaving(false);
+      return;
+    }
+
+    setReport(result.report as unknown as Report);
+    setEditMode(false);
+    setSaving(false);
+  };
+
+  const handleDelete = async () => {
+    if (!report) return;
+    if (!confirm('¿Eliminar este reporte permanentemente? Esta acción no se puede deshacer.')) return;
+
+    setDeleting(true);
+    const res = await fetch(`/api/reportes/${report.id}?id=${report.id}`, {
+      method: 'DELETE',
+    });
+
+    if (res.ok) {
+      router.push('/dashboard');
+    } else {
+      const result = await res.json();
+      alert(result.error || 'Error al eliminar');
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -80,17 +183,46 @@ export default function ReporteDetailPage() {
     );
   }
 
+  const statusOptions: ReportStatus[] = ['open', 'in_progress', 'resolved', 'closed', 'reopened'];
+  const priorityOptions: ReportPriority[] = ['low', 'medium', 'high', 'critical'];
+
   return (
     <DashboardLayout title={report.title} subtitle="Detalle del reporte">
       <div className="max-w-4xl mx-auto">
-        {/* Back button */}
-        <button
-          onClick={() => router.push('/dashboard')}
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Volver al Dashboard
-        </button>
+        {/* Back + Actions row */}
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Volver al Dashboard
+          </button>
+
+          {canModify && (
+            <div className="flex items-center gap-2">
+              {!editMode && (
+                <>
+                  <button
+                    onClick={startEdit}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Editar
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {deleting ? 'Eliminando...' : 'Eliminar'}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main content */}
@@ -100,6 +232,93 @@ export default function ReporteDetailPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Descripción</h2>
               <p className="text-gray-700 whitespace-pre-wrap">{report.description}</p>
             </div>
+
+            {/* Edit form */}
+            {editMode && (
+              <div className="bg-white rounded-xl border border-emerald-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Editar Reporte</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                    <textarea
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      rows={4}
+                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-y"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
+                      <select
+                        value={editPriority}
+                        onChange={(e) => setEditPriority(e.target.value as ReportPriority)}
+                        className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      >
+                        {priorityOptions.map((p) => (
+                          <option key={p} value={p}>{PRIORITY_LABELS[p]}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                      <select
+                        value={editStatus}
+                        onChange={(e) => setEditStatus(e.target.value as ReportStatus)}
+                        className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      >
+                        {statusOptions.map((s) => (
+                          <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Módulo</label>
+                    <select
+                      value={editModuleId}
+                      onChange={(e) => setEditModuleId(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="">Sin módulo</option>
+                      {modules.map((m) => (
+                        <option key={m.id} value={m.id}>{m.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {editError && <p className="text-sm text-red-600">{editError}</p>}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-600 disabled:opacity-50 transition-colors"
+                    >
+                      {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                      <Check className="w-4 h-4" />
+                      {saving ? 'Guardando...' : 'Guardar Cambios'}
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Attachments */}
             {report.attachments && report.attachments.length > 0 && (

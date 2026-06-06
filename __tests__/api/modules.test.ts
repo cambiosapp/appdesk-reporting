@@ -25,7 +25,7 @@ describe('Modules API - Validation', () => {
   });
 
   test('optional description can be null', () => {
-    const description = null;
+    const description = null as string | null;
     const sanitized = description?.trim() || null;
     expect(sanitized).toBeNull();
   });
@@ -50,7 +50,7 @@ describe('Modules API - Admin Authorization Check', () => {
   });
 
   test('reporter role denies admin access', () => {
-    const role = 'reporter';
+    const role: string = 'reporter';
     expect(role === 'admin').toBe(false);
   });
 });

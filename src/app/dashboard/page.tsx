@@ -32,6 +32,8 @@ export default function DashboardPage() {
   const [priorityFilter, setPriorityFilter] = useState<ReportPriority | ''>('');
   const [statusFilter, setStatusFilter] = useState<ReportStatus | ''>('');
   const [stats, setStats] = useState({ total: 0, open: 0, bugs: 0, resolved: 0 });
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const fetchReports = useCallback(async () => {
@@ -78,22 +80,24 @@ export default function DashboardPage() {
       .eq('id', user.id)
       .single();
 
-    const isAdmin = profile?.role === 'admin';
+    const admin = profile?.role === 'admin';
+    setIsAdmin(admin);
+    setCurrentUserId(user.id);
 
     let q1 = supabase.from('reports').select('*', { count: 'exact', head: true });
-    if (!isAdmin) q1 = q1.eq('reporter_id', user.id);
+    if (!admin) q1 = q1.eq('reporter_id', user.id);
     const { count: total } = await q1;
 
     let q2 = supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'open');
-    if (!isAdmin) q2 = q2.eq('reporter_id', user.id);
+    if (!admin) q2 = q2.eq('reporter_id', user.id);
     const { count: open } = await q2;
 
     let q3 = supabase.from('reports').select('*', { count: 'exact', head: true }).eq('type', 'bug');
-    if (!isAdmin) q3 = q3.eq('reporter_id', user.id);
+    if (!admin) q3 = q3.eq('reporter_id', user.id);
     const { count: bugs } = await q3;
 
     let q4 = supabase.from('reports').select('*', { count: 'exact', head: true }).in('status', ['resolved', 'closed']);
-    if (!isAdmin) q4 = q4.eq('reporter_id', user.id);
+    if (!admin) q4 = q4.eq('reporter_id', user.id);
     const { count: resolved } = await q4;
 
     setStats({
@@ -109,13 +113,17 @@ export default function DashboardPage() {
     fetchStats();
   }, [fetchReports, fetchStats]);
 
-  // Realtime subscription
+  // Realtime subscription — filtered by user for non-admins
   useEffect(() => {
+    const filter = !isAdmin && currentUserId
+      ? `reporter_id=eq.${currentUserId}`
+      : undefined;
+
     channelRef.current = supabase
       .channel('reports-changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'reports' },
+        { event: '*', schema: 'public', table: 'reports', filter },
         () => {
           fetchReports();
           fetchStats();
@@ -128,7 +136,7 @@ export default function DashboardPage() {
         supabase.removeChannel(channelRef.current);
       }
     };
-  }, [supabase, fetchReports, fetchStats]);
+  }, [supabase, fetchReports, fetchStats, isAdmin, currentUserId]);
 
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
 

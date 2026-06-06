@@ -23,7 +23,7 @@ export async function middleware(request: NextRequest) {
   // Create response
   const response = NextResponse.next();
 
-  // Create Supabase client
+  // Create Supabase client (only set cookies on response, request is immutable)
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -33,9 +33,6 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );
