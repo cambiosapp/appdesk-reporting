@@ -34,11 +34,11 @@ export async function POST(request: Request) {
 
     // Get the report with relations
     const { data: report, error: dbError } = await supabase
-      .from('reports')
+      .from('appdesk_reports')
       .select(`
         *,
-        module:modules(*),
-        reporter:profiles(*)
+        module:appdesk_modules(*),
+        reporter:appdesk_profiles(*)
       `)
       .eq('id', reportId)
       .single();
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
 
     // Update report with Jira info
     const { error: updateError } = await supabase
-      .from('reports')
+      .from('appdesk_reports')
       .update({
         jira_ticket_id: jiraResult.id,
         jira_ticket_key: jiraResult.key,
@@ -100,7 +100,7 @@ export async function GET(request: Request) {
 
     if (reportId && !issueKey) {
       const { data: report } = await supabase
-        .from('reports')
+        .from('appdesk_reports')
         .select('jira_ticket_key')
         .eq('id', reportId)
         .single();
@@ -121,7 +121,7 @@ export async function GET(request: Request) {
 
     if (reportId) {
       await supabase
-        .from('reports')
+        .from('appdesk_reports')
         .update({ status: localStatus })
         .eq('id', reportId);
     }

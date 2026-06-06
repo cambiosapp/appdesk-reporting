@@ -18,7 +18,7 @@ export async function GET() {
     if (limit) return limit;
 
     const { data, error } = await supabase
-      .from('modules')
+      .from('appdesk_modules')
       .select('*')
       .order('name');
 
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
     // Check admin role
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('appdesk_profiles')
       .select('role')
       .eq('id', user.id)
       .single();
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     }
 
     const { data, error } = await supabase
-      .from('modules')
+      .from('appdesk_modules')
       .insert({ name: parsed.data.name.trim(), description: parsed.data.description?.trim() || null })
       .select()
       .single();
@@ -100,7 +100,7 @@ export async function PUT(request: Request) {
 
     // Check admin role
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('appdesk_profiles')
       .select('role')
       .eq('id', user.id)
       .single();
@@ -125,7 +125,7 @@ export async function PUT(request: Request) {
     if (parsed.data.description !== undefined) updates.description = parsed.data.description?.trim() || null;
 
     const { data, error } = await supabase
-      .from('modules')
+      .from('appdesk_modules')
       .update(updates)
       .eq('id', parsed.data.id)
       .select()
@@ -157,7 +157,7 @@ export async function DELETE(request: Request) {
 
     // Check admin role
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('appdesk_profiles')
       .select('role')
       .eq('id', user.id)
       .single();
@@ -173,7 +173,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    const { error } = await supabase.from('modules').delete().eq('id', id);
+    const { error } = await supabase.from('appdesk_modules').delete().eq('id', id);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

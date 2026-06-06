@@ -21,7 +21,7 @@ export default function AdminUsuariosPage() {
   const [error, setError] = useState('');
 
   const loadProfiles = async () => {
-    const { data } = await supabase.from('profiles').select('*').order('name');
+    const { data } = await supabase.from('appdesk_profiles').select('*').order('name');
     if (data) setProfiles(data);
     setLoading(false);
   };
@@ -33,7 +33,7 @@ export default function AdminUsuariosPage() {
   const handleToggleRole = async (profile: Profile) => {
     const newRole: UserRole = profile.role === 'admin' ? 'reporter' : 'admin';
     const { error } = await supabase
-      .from('profiles')
+      .from('appdesk_profiles')
       .update({ role: newRole })
       .eq('id', profile.id);
 
@@ -71,7 +71,7 @@ export default function AdminUsuariosPage() {
 
       if (userData.user) {
         // Create profile
-        const { error: profileError } = await adminClient.from('profiles').insert({
+        const { error: profileError } = await adminClient.from('appdesk_profiles').insert({
           id: userData.user.id,
           name: name.trim(),
           role,

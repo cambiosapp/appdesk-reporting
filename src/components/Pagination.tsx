@@ -59,9 +59,9 @@ export default function Pagination({
 
   return (
     <div className="px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      {/* Info — oculto en mobile muy pequeño */}
+      {/* Info â€” oculto en mobile muy pequeño */}
       <p className="hidden xs:block sm:text-sm text-xs text-gray-500">
-        Mostrando <span className="font-medium">{from}</span>–<span className="font-medium">{to}</span> de{' '}
+        Mostrando <span className="font-medium">{from}</span>â€“<span className="font-medium">{to}</span> de{' '}
         <span className="font-medium">{totalItems}</span> reportes
       </p>
 
@@ -126,7 +126,7 @@ export default function Pagination({
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage === totalPages}
           className={`${btnBase} ${currentPage === totalPages ? btnDisabled : btnInactive}`}
-          aria-label="Última página"
+          aria-label="Ãšltima página"
         >
           <ChevronsRight className="w-4 h-4" />
         </button>

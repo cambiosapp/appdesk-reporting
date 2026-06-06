@@ -32,7 +32,7 @@ export async function PUT(request: Request) {
 
     // Get existing report to verify ownership
     const { data: existing } = await supabase
-      .from('reports')
+      .from('appdesk_reports')
       .select('reporter_id')
       .eq('id', id)
       .single();
@@ -43,7 +43,7 @@ export async function PUT(request: Request) {
 
     // Check if user is admin or report owner
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('appdesk_profiles')
       .select('role')
       .eq('id', user.id)
       .single();
@@ -62,10 +62,10 @@ export async function PUT(request: Request) {
     if (updatesInput.status !== undefined) updates.status = updatesInput.status;
 
     const { data, error } = await supabase
-      .from('reports')
+      .from('appdesk_reports')
       .update(updates)
       .eq('id', id)
-      .select(`*, module:modules(*), reporter:profiles(*)`)
+      .select(`*, module:appdesk_modules(*), reporter:appdesk_profiles(*)`)
       .single();
 
     if (error) {
@@ -88,6 +88,10 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Rate limit
+    const limit = rateLimit(`reports:delete:${user.id}`);
+    if (limit) return limit;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -97,7 +101,7 @@ export async function DELETE(request: Request) {
 
     // Get existing report to verify ownership
     const { data: existing } = await supabase
-      .from('reports')
+      .from('appdesk_reports')
       .select('reporter_id')
       .eq('id', id)
       .single();
@@ -108,7 +112,7 @@ export async function DELETE(request: Request) {
 
     // Check if user is admin or report owner
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('appdesk_profiles')
       .select('role')
       .eq('id', user.id)
       .single();
@@ -117,7 +121,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { error } = await supabase.from('reports').delete().eq('id', id);
+    const { error } = await supabase.from('appdesk_reports').delete().eq('id', id);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

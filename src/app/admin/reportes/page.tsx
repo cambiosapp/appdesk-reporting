@@ -25,11 +25,11 @@ export default function AdminReportesPage() {
     setLoading(true);
 
     let query = supabase
-      .from('reports')
+      .from('appdesk_reports')
       .select(`
         *,
-        module:modules(*),
-        reporter:profiles(*)
+        module:appdesk_modules(*),
+        reporter:appdesk_profiles(*)
       `, { count: 'exact' });
 
     if (typeFilter) query = query.eq('type', typeFilter);
@@ -64,7 +64,7 @@ export default function AdminReportesPage() {
   return (
     <DashboardLayout
       title="Todos los Reportes"
-      subtitle="Visión general de todos los reportes del sistema"
+      subtitle="VisiÃƒ³n general de todos los reportes del sistema"
     >
       <div className="mb-6">
         <FilterBar

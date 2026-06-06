@@ -40,7 +40,7 @@ export default function ReportForm() {
 
   useEffect(() => {
     async function loadModules() {
-      const { data } = await supabase.from('modules').select('*').order('name');
+      const { data } = await supabase.from('appdesk_modules').select('*').order('name');
       if (data) setModules(data);
     }
     loadModules();
@@ -58,7 +58,7 @@ export default function ReportForm() {
       const filePath = `reports/${Date.now()}_${file.name}`;
 
       const { data, error } = await supabase.storage
-        .from('attachments')
+        .from('appdesk-attachments')
         .upload(filePath, file);
 
       if (error) {
@@ -67,7 +67,7 @@ export default function ReportForm() {
       }
 
       const { data: urlData } = supabase.storage
-        .from('attachments')
+        .from('appdesk-attachments')
         .getPublicUrl(filePath);
 
       uploaded.push({
@@ -107,8 +107,8 @@ export default function ReportForm() {
     }
 
     // Create the report in Supabase
-    const { data: report, error: dbError } = await supabase
-      .from('reports')
+    const { data: report, error: dbError, status: dbStatus } = await supabase
+      .from('appdesk_reports')
       .insert({
         title,
         type,
@@ -122,8 +122,14 @@ export default function ReportForm() {
       .select()
       .single();
 
-    if (dbError || !report) {
-      setError('Error al guardar el reporte: ' + (dbError?.message || 'Desconocido'));
+    if (dbError) {
+      setError(`Error al guardar: ${dbError.message} (código: ${dbError.code || dbStatus})`);
+      setSubmitting(false);
+      return;
+    }
+
+    if (!report) {
+      setError('Error al guardar: el reporte se creó pero no se pudo recuperar. Verificá las políticas RLS en Supabase.');
       setSubmitting(false);
       return;
     }

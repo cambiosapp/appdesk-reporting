@@ -19,10 +19,10 @@ export default function AdminPanelPage() {
     async function loadStats() {
       const [{ count: totalReports }, { count: totalModules }, { count: totalUsers }, { count: openReports }] =
         await Promise.all([
-          supabase.from('reports').select('*', { count: 'exact', head: true }),
-          supabase.from('modules').select('*', { count: 'exact', head: true }),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }),
-          supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'open'),
+          supabase.from('appdesk_reports').select('*', { count: 'exact', head: true }),
+          supabase.from('appdesk_modules').select('*', { count: 'exact', head: true }),
+          supabase.from('appdesk_profiles').select('*', { count: 'exact', head: true }),
+          supabase.from('appdesk_reports').select('*', { count: 'exact', head: true }).eq('status', 'open'),
         ]);
 
       setStats({

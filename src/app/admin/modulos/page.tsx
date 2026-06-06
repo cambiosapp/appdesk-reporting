@@ -19,7 +19,7 @@ export default function AdminModulosPage() {
   const [error, setError] = useState('');
 
   const loadModules = async () => {
-    const { data } = await supabase.from('modules').select('*').order('name');
+    const { data } = await supabase.from('appdesk_modules').select('*').order('name');
     if (data) setModules(data);
     setLoading(false);
   };
@@ -46,7 +46,7 @@ export default function AdminModulosPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('¿Eliminar este módulo? Los reportes asociados perderán la referencia.')) return;
 
-    const { error } = await supabase.from('modules').delete().eq('id', id);
+    const { error } = await supabase.from('appdesk_modules').delete().eq('id', id);
     if (!error) {
       loadModules();
     }
@@ -65,7 +65,7 @@ export default function AdminModulosPage() {
 
     if (editModule) {
       const { error } = await supabase
-        .from('modules')
+        .from('appdesk_modules')
         .update({ name: name.trim(), description: description.trim() })
         .eq('id', editModule.id);
 
@@ -77,7 +77,7 @@ export default function AdminModulosPage() {
       }
     } else {
       const { error } = await supabase
-        .from('modules')
+        .from('appdesk_modules')
         .insert({ name: name.trim(), description: description.trim() });
 
       if (error) {

@@ -37,7 +37,6 @@ export default function ReporteDetailPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Edit mode state
   const [editMode, setEditMode] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -56,27 +55,21 @@ export default function ReporteDetailPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) setCurrentUserId(user.id);
 
-      // Load profile to check role
       if (user) {
         const { data: profile } = await supabase
-          .from('profiles')
+          .from('appdesk_profiles')
           .select('role')
           .eq('id', user.id)
           .single();
         if (profile?.role === 'admin') setIsAdmin(true);
       }
 
-      // Load modules
-      const { data: modulesData } = await supabase.from('modules').select('*').order('name');
+      const { data: modulesData } = await supabase.from('appdesk_modules').select('*').order('name');
       if (modulesData) setModules(modulesData);
 
       const { data, error } = await supabase
-        .from('reports')
-        .select(`
-          *,
-          module:modules(*),
-          reporter:profiles(*)
-        `)
+        .from('appdesk_reports')
+        .select(`*, module:appdesk_modules(*), reporter:appdesk_profiles(*)`)
         .eq('id', params.id)
         .single();
 
@@ -189,7 +182,6 @@ export default function ReporteDetailPage() {
   return (
     <DashboardLayout title={report.title} subtitle="Detalle del reporte">
       <div className="max-w-4xl mx-auto">
-        {/* Back + Actions row */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <button
             onClick={() => router.push('/dashboard')}
@@ -225,15 +217,12 @@ export default function ReporteDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Description */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Descripción</h2>
               <p className="text-gray-700 whitespace-pre-wrap">{report.description}</p>
             </div>
 
-            {/* Edit form */}
             {editMode && (
               <div className="bg-white rounded-xl border border-emerald-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Editar Reporte</h2>
@@ -320,7 +309,6 @@ export default function ReporteDetailPage() {
               </div>
             )}
 
-            {/* Attachments */}
             {report.attachments && report.attachments.length > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -354,9 +342,7 @@ export default function ReporteDetailPage() {
             )}
           </div>
 
-          {/* Sidebar info */}
           <div className="space-y-4">
-            {/* Status */}
             <div className="bg-white rounded-xl border border-gray-200 p-5">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
                 Información
@@ -364,9 +350,7 @@ export default function ReporteDetailPage() {
               <div className="space-y-4">
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Estado</p>
-                  <span
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[report.status]}`}
-                  >
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[report.status]}`}>
                     {STATUS_LABELS[report.status]}
                   </span>
                 </div>
@@ -378,16 +362,13 @@ export default function ReporteDetailPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Prioridad</p>
-                  <span
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${PRIORITY_COLORS[report.priority]}`}
-                  >
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${PRIORITY_COLORS[report.priority]}`}>
                     {PRIORITY_LABELS[report.priority]}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Details */}
             <div className="bg-white rounded-xl border border-gray-200 p-5">
               <div className="space-y-3">
                 {report.module && (

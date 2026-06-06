@@ -27,11 +27,11 @@ export async function GET(request: Request) {
     const reporterId = searchParams.get('reporterId');
 
     let query = supabase
-      .from('reports')
+      .from('appdesk_reports')
       .select(`
         *,
-        module:modules(*),
-        reporter:profiles(*)
+        module:appdesk_modules(*),
+        reporter:appdesk_profiles(*)
       `, { count: 'exact' });
 
     if (type) query = query.eq('type', type);
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 
     // Check if user is admin, if not scope to own reports
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('appdesk_profiles')
       .select('role')
       .eq('id', user.id)
       .single();
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     }
 
     const { data, error } = await supabase
-      .from('reports')
+      .from('appdesk_reports')
       .insert({
         title: parsed.data.title,
         type: parsed.data.type,

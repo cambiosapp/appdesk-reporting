@@ -45,7 +45,7 @@ export default function LoginPage() {
             <Bug className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white">AppDesk</h1>
-          <p className="text-slate-400 mt-1">Portal de Reportes — CambiosApp</p>
+          <p className="text-slate-400 mt-1">Portal de Reportes â€” CambiosApp</p>
         </div>
 
         {/* Card */}
@@ -81,7 +81,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent pr-10"
                   required
                   autoComplete="current-password"

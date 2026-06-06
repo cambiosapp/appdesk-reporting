@@ -14,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'AppDesk — Portal de Reportes',
+  title: 'AppDesk â€” Portal de Reportes',
   description: 'Portal interno de reportes para CambiosApp. Reporta bugs, tareas y mejoras.',
   icons: {
     icon: '/favicon.ico',

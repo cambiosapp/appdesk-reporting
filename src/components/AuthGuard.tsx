@@ -26,7 +26,7 @@ export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
 
       if (requiredRole) {
         const { data: profile } = await supabase
-          .from('profiles')
+          .from('appdesk_profiles')
           .select('role')
           .eq('id', user.id)
           .single();

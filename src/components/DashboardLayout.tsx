@@ -29,7 +29,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
       }
 
       const { data } = await supabase
-        .from('profiles')
+        .from('appdesk_profiles')
         .select('*')
         .eq('id', user.id)
         .single();
@@ -69,7 +69,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
         <header className="sticky top-0 z-20 bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-3 lg:py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              {/* Hamburger — solo mobile */}
+              {/* Hamburger â€” solo mobile */}
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors lg:hidden shrink-0"

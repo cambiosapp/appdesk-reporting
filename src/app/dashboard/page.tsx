@@ -40,11 +40,11 @@ export default function DashboardPage() {
     setLoading(true);
 
     let query = supabase
-      .from('reports')
+      .from('appdesk_reports')
       .select(`
         *,
-        module:modules(*),
-        reporter:profiles(*)
+        module:appdesk_modules(*),
+        reporter:appdesk_profiles(*)
       `, { count: 'exact' });
 
     if (typeFilter) query = query.eq('type', typeFilter);
@@ -75,7 +75,7 @@ export default function DashboardPage() {
     if (!user) return;
 
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('appdesk_profiles')
       .select('role')
       .eq('id', user.id)
       .single();
@@ -84,19 +84,19 @@ export default function DashboardPage() {
     setIsAdmin(admin);
     setCurrentUserId(user.id);
 
-    let q1 = supabase.from('reports').select('*', { count: 'exact', head: true });
+    let q1 = supabase.from('appdesk_reports').select('*', { count: 'exact', head: true });
     if (!admin) q1 = q1.eq('reporter_id', user.id);
     const { count: total } = await q1;
 
-    let q2 = supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'open');
+    let q2 = supabase.from('appdesk_reports').select('*', { count: 'exact', head: true }).eq('status', 'open');
     if (!admin) q2 = q2.eq('reporter_id', user.id);
     const { count: open } = await q2;
 
-    let q3 = supabase.from('reports').select('*', { count: 'exact', head: true }).eq('type', 'bug');
+    let q3 = supabase.from('appdesk_reports').select('*', { count: 'exact', head: true }).eq('type', 'bug');
     if (!admin) q3 = q3.eq('reporter_id', user.id);
     const { count: bugs } = await q3;
 
-    let q4 = supabase.from('reports').select('*', { count: 'exact', head: true }).in('status', ['resolved', 'closed']);
+    let q4 = supabase.from('appdesk_reports').select('*', { count: 'exact', head: true }).in('status', ['resolved', 'closed']);
     if (!admin) q4 = q4.eq('reporter_id', user.id);
     const { count: resolved } = await q4;
 
@@ -113,7 +113,7 @@ export default function DashboardPage() {
     fetchStats();
   }, [fetchReports, fetchStats]);
 
-  // Realtime subscription — filtered by user for non-admins
+  // Realtime subscription Ã¢â‚¬â€ filtered by user for non-admins
   useEffect(() => {
     const filter = !isAdmin && currentUserId
       ? `reporter_id=eq.${currentUserId}`
@@ -123,7 +123,7 @@ export default function DashboardPage() {
       .channel('reports-changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'reports', filter },
+        { event: '*', schema: 'public', table: 'appdesk_reports', filter },
         () => {
           fetchReports();
           fetchStats();
@@ -158,7 +158,7 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout title="Dashboard" subtitle="Panel principal de reportes">
-      {/* Stats Cards — responsive grid */}
+      {/* Stats Cards Ã¢â‚¬â€ responsive grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {statsCards.map((card) => {
           const Icon = card.icon;
@@ -192,10 +192,10 @@ export default function DashboardPage() {
             <FileText className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600" />
           </div>
           <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
-            No hay reportes aún
+            No hay reportes aÃƒºn
           </h2>
           <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-            Comienza reportando tu primer error, tarea o mejora. En unos pasos tendrás tu ticket en Jira.
+            Comienza reportando tu primer error, tarea o mejora. En unos pasos tendrÃƒ¡s tu ticket en Jira.
           </p>
           <Link
             href="/reportes/nuevo"
@@ -243,7 +243,7 @@ export default function DashboardPage() {
         </>
       )}
 
-      {/* FAB — Nuevo Reporte en mobile */}
+      {/* FAB Ã¢â‚¬â€ Nuevo Reporte en mobile */}
       <Link
         href="/reportes/nuevo"
         className="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-emerald-500 text-white shadow-lg hover:bg-emerald-600 hover:shadow-xl transition-all flex items-center justify-center lg:hidden"

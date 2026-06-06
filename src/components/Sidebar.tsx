@@ -79,7 +79,7 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Overlay — only on mobile */}
+      {/* Overlay â€” only on mobile */}
       {isOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/50 lg:hidden"
