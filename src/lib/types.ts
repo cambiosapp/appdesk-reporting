@@ -47,6 +47,8 @@ export interface Attachment {
   type: string;
 }
 
+
+
 export interface JiraIssue {
   id: string;
   key: string;
